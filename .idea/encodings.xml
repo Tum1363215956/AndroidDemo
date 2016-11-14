@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding" defaultCharsetForPropertiesFiles="GBK">
+    <file url="file://$PROJECT_DIR$/app/src/main/java/com/tum/androiddemo/WIFI/WIFIDemo5/adapter/MyListViewAdapter.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/app/src/main/java/com/tum/androiddemo/WIFI/WIFIDemo5/dialog/WifiConnDialog.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/app/src/main/java/com/tum/androiddemo/WIFI/WIFIDemo5/dialog/WifiStatusDialog.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/app/src/main/java/com/tum/androiddemo/WIFI/WIFIDemo5/util/WifiAdmin.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/app/src/main/java/com/tum/androiddemo/WIFI/WIFIDemo5/util/WifiConnect.java" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/app/src/main/java/com/tum/androiddemo/WIFI/WIFIDemo5/view/MyListView.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/app/src/main/java/com/tum/androiddemo/WIFI/wificontrolDemo2/control.java" charset="UTF-8" />
+    <file url="file://D:/我的资料/WIFI/Android应用源码开关WIFI热点搜索连接开源有注释/Android应用源码开关WIFI热点搜索连接开源有注释/WifiDemo/src/com/listong/ui/WifiListActivity.java" charset="GBK" />
+    <file url="file://D:/我的资料/WIFI/Android应用源码开关WIFI热点搜索连接开源有注释/Android应用源码开关WIFI热点搜索连接开源有注释/WifiDemo/src/com/listong/util/WifiAdmin.java" charset="GBK" />
+    <file url="file://D:/我的资料/WIFI/Android应用源码开关WIFI热点搜索连接开源有注释/Android应用源码开关WIFI热点搜索连接开源有注释/WifiDemo/src/com/listong/util/WifiConnect.java" charset="GBK" />
+    <file url="file://D:/我的资料/WIFI/Android应用源码开关WIFI热点搜索连接开源有注释/Android应用源码开关WIFI热点搜索连接开源有注释/WifiDemo/src/com/listong/view/WifiConnDialog.java" charset="GBK" />
+    <file url="file://D:/我的资料/WIFI/Android应用源码开关WIFI热点搜索连接开源有注释/Android应用源码开关WIFI热点搜索连接开源有注释/WifiDemo/src/com/listong/view/WifiStatusDialog.java" charset="GBK" />
+    <file url="PROJECT" charset="UTF-8" />
+  </component>
+</project>
