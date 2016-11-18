@@ -21,6 +21,11 @@
             style="@style/style_main_btn"
             android:text="RXJAVA"/>
 
+        <Button
+            android:id="@+id/btn_main_UI"
+            style="@style/style_main_btn"
+            android:text="UI"/>
+
     </LinearLayout>
 
 </ScrollView>

@@ -3,6 +3,7 @@ package com.tum.androiddemo.WIFI.WIFIDemo5;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
@@ -46,6 +47,10 @@ public class WIFIConnectActivity extends AppCompatActivity {
     private int mTime = 1000;
 
     private boolean isDelay = false;//是否已经连接，连接 不延时
+
+    private NetWorkStateChangeReceviver receviver;
+
+    private boolean isFlushing = false;//是否正在刷新
 
     private OnNetworkChangeListener mOnNetworkChangeListener = new OnNetworkChangeListener() {
 
@@ -103,9 +108,40 @@ public class WIFIConnectActivity extends AppCompatActivity {
 
         cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
 
+        if(mWifiAdmin.getConfiguration() != null) {
+            for (WifiConfiguration config : mWifiAdmin.getConfiguration()) {
+                if(config.BSSID == null){
+                    Log.i("TGA=======>", "TGA config SSID:" + config.SSID+",BSSID:空"+",netWorkId:"+config.networkId+",密码:"+config.preSharedKey);
+                }else {
+                    Log.i("TGA=======>", "TGA config SSID:" + config.SSID+",BSSID:"+config.BSSID);
+                }
+            }
+        }
+
         //初始化UI
         initView();
         setListener();
+
+        registerBroadcast();//注册广播
+    }
+
+    /**
+     * 注册广播
+     */
+    private void registerBroadcast() {
+        receviver = new NetWorkStateChangeReceviver();
+        IntentFilter filter = new IntentFilter();
+//        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+        filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+        filter.addAction(WifiManager.RSSI_CHANGED_ACTION);
+        registerReceiver(receviver,filter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(receviver);
+        super.onDestroy();
     }
 
     //=============================== UI =====================================================
@@ -164,7 +200,8 @@ public class WIFIConnectActivity extends AppCompatActivity {
                 if (checkWifiIsConnec(clickWifiItem)) {//已连接
                     isConnectSelf(clickWifiItem);
                 } else if(isHasConfig(clickWifiItem)){
-
+                    Log.i("TGA","TGA 已经配置!SSID:"+clickWifiItem.SSID);
+                    showDetails(clickWifiItem);
                 }else {//未连接
                     isConnect(clickWifiItem);
                 }
@@ -177,6 +214,10 @@ public class WIFIConnectActivity extends AppCompatActivity {
      * 刷新Wifi
      */
     private void flushWifi(){
+        if(isFlushing){
+            return;
+        }
+        isFlushing = true;
         new AsyncTask<Void, Void, Void>() {
             protected Void doInBackground(Void... params) {
                 try {
@@ -194,6 +235,7 @@ public class WIFIConnectActivity extends AppCompatActivity {
                 mAdapter.notifyDataSetChanged();
                 freelook_listview.onRefreshComplete();
                 Log.i("TGA----->","TGA 刷新完成");
+                isFlushing = false;
             }
         }.execute();
     }
@@ -204,8 +246,9 @@ public class WIFIConnectActivity extends AppCompatActivity {
      * @return
      */
     private boolean isHasConfig(ScanResult scanResult){
-        for(WifiConfiguration config : mWifiAdmin.getConfiguration()){
-            if(config.SSID.equals(scanResult.SSID) && config.BSSID.equals(scanResult.BSSID)){
+        for(WifiConfiguration config : mWifiAdmin.getConfiguration()) {
+            Log.i("TGA", "TGA config.SSID：" + config.SSID + ",scanResult.SSID：" + scanResult.SSID);
+            if (config.SSID.equals("\"" + scanResult.SSID + "\"")) {
                 return true;
             }
         }
@@ -303,28 +346,78 @@ public class WIFIConnectActivity extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            NetworkInfo.State wifiState = null;
-            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            wifiState = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
-            Log.i("TGA-------->","============ NetWorkStateChangeReceviver ================");
-            if(wifiState != null && NetworkInfo.State.CONNECTED == wifiState){
-                Log.i("TGA-------->","TGA wifi 已经打开:"+wifiState);
+            if(intent.getAction().equals(WifiManager.RSSI_CHANGED_ACTION)){
+                Log.i("TGA=======>","TGA RSSI changed!");
+            }else if(intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)){//wifi连接上与否
+                System.out.println("网络状态改变");
+                NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+                if(info.getState().equals(NetworkInfo.State.DISCONNECTED)){//断开
+                    System.out.println("wifi网络连接断开");
+                    Log.i("TGA======>","TGA wifi网络连接断开");
+                    flushWifi();
+                }else if(info.getState().equals(NetworkInfo.State.CONNECTED)){//连接成功
+
+                    WifiManager wifiManager = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
+                    WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+
+                    //获取当前wifi名称
+                    System.out.println("连接到网络 " + wifiInfo.getSSID());
+                    Log.i("TGA======>","TGA 连接到网络 " + wifiInfo.getSSID());
+                    flushWifi();
+                }else if(info.getState().equals(NetworkInfo.State.CONNECTING)){
+                    Log.i("TGA======>","TGA 正在连接网络。。。。。 ");
+                }else if(info.getState().equals(NetworkInfo.State.SUSPENDED)){
+                    Log.i("TGA======>","TGA 网络冲突 ");
+                }else if(info.getState().equals(NetworkInfo.State.DISCONNECTING)){
+                    Log.i("TGA======>","TGA 网络正在断开连接。。。 ");
+                }else if(info.getState().equals(NetworkInfo.State.UNKNOWN)){
+                    Log.i("TGA======>","TGA 网络未知! ");
+                }
+            }else if(intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)){//wifi打开与否
+                int wifistate = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, WifiManager.WIFI_STATE_DISABLED);
+
+                if(wifistate == WifiManager.WIFI_STATE_DISABLED){
+                    System.out.println("系统关闭wifi");
+                    Log.i("TGA======>","TGA 系统关闭wifi");
+                    flushWifi();
+                }
+                else if(wifistate == WifiManager.WIFI_STATE_ENABLED){
+                    System.out.println("系统开启wifi");
+                    Log.i("TGA======>","TGA 系统开启wifi");
+                    mTime = 1500;
+                    flushWifi();
+                }
             }
-            if(wifiState != null && NetworkInfo.State.CONNECTING == wifiState){
-                Log.i("TGA-------->","TGA wifi 正在打开:"+wifiState);
-            }
-            if(wifiState != null && NetworkInfo.State.SUSPENDED == wifiState){
-                Log.i("TGA-------->","TGA wifi 有冲突:"+wifiState);
-            }
-            if(wifiState != null && NetworkInfo.State.DISCONNECTING == wifiState){
-                Log.i("TGA-------->","TGA wifi 正在关闭:"+wifiState);
-            }
-            if(wifiState != null && NetworkInfo.State.DISCONNECTED == wifiState){
-                Log.i("TGA-------->","TGA wifi 已经关闭:"+wifiState);
-            }
-            if(wifiState != null && NetworkInfo.State.UNKNOWN == wifiState){
-                Log.i("TGA-------->","TGA wifi 未知:"+wifiState);
-            }
+        }
+    }
+
+    /**
+     * 网络状态发生改变
+     */
+    private void netWorkStateChanage(){
+        NetworkInfo.State wifiState = null;
+        ConnectivityManager cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        wifiState = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
+        Log.i("TGA-------->","============ NetWorkStateChangeReceviver ================");
+        if(wifiState != null && NetworkInfo.State.CONNECTED == wifiState){
+            Log.i("TGA-------->","TGA wifi 已经打开:"+wifiState);
+            flushWifi();//刷新界面
+        }
+        if(wifiState != null && NetworkInfo.State.CONNECTING == wifiState){
+            Log.i("TGA-------->","TGA wifi 正在打开:"+wifiState);
+        }
+        if(wifiState != null && NetworkInfo.State.SUSPENDED == wifiState){
+            Log.i("TGA-------->","TGA wifi 有冲突:"+wifiState);
+        }
+        if(wifiState != null && NetworkInfo.State.DISCONNECTING == wifiState){
+            Log.i("TGA-------->","TGA wifi 正在关闭:"+wifiState);
+        }
+        if(wifiState != null && NetworkInfo.State.DISCONNECTED == wifiState){
+            Log.i("TGA-------->","TGA wifi 已经关闭:"+wifiState);
+            flushWifi();
+        }
+        if(wifiState != null && NetworkInfo.State.UNKNOWN == wifiState){
+            Log.i("TGA-------->","TGA wifi 未知:"+wifiState);
         }
     }
 
