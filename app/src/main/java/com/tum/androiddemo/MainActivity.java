@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
+import com.tum.androiddemo.RXJava.RXJavaActivity;
 import com.tum.androiddemo.WIFI.WIFIActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -19,8 +20,11 @@ public class MainActivity extends AppCompatActivity {
     public void main_btn_onClick(View view){
         Intent intent = new Intent();
         switch (view.getId()){
-            case R.id.btn_main_wifi:
+            case R.id.btn_main_wifi://wifi
                 intent.setClass(this, WIFIActivity.class);
+                break;
+            case R.id.btn_main_rxjava://RxJava
+                intent.setClass(this, RXJavaActivity.class);
                 break;
         }
         startActivity(intent);

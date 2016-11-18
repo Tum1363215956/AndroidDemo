@@ -10,7 +10,7 @@ import com.tum.androiddemo.WIFI.AndroidWIFIdemo3.Android_Wifi;
 import com.tum.androiddemo.WIFI.WIFIDEMO1.WIFIDEMOONEActivity;
 import com.tum.androiddemo.WIFI.WIFIDEMO4.WifiGuan;
 import com.tum.androiddemo.WIFI.WIFIDemo5.WIFIConnectActivity;
-import com.tum.androiddemo.WIFI.WIFIDemo6.WifiActivity;
+import com.tum.androiddemo.WIFI.WIFIDemo7ChuanTu.SimpleHttpActivity;
 import com.tum.androiddemo.WIFI.wificontrolDemo2.control;
 
 public class WIFIActivity extends AppCompatActivity {
@@ -40,7 +40,7 @@ public class WIFIActivity extends AppCompatActivity {
                 intent.setClass(this, WIFIConnectActivity.class);
                 break;
             case R.id.btn_wifi_wifidemo6:
-                intent.setClass(this, WifiActivity.class);
+                intent.setClass(this, SimpleHttpActivity.class);
                 break;
         }
         startActivity(intent);

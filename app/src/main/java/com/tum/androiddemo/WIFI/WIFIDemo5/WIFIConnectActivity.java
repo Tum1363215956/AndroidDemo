@@ -1,13 +1,18 @@
 package com.tum.androiddemo.WIFI.WIFIDemo5;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -17,6 +22,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.tum.androiddemo.R;
+import com.tum.androiddemo.WIFI.WIFIDemo5.Thread.AutoConnectThread;
 import com.tum.androiddemo.WIFI.WIFIDemo5.adapter.MyListViewAdapter;
 import com.tum.androiddemo.WIFI.WIFIDemo5.dialog.OnNetworkChangeListener;
 import com.tum.androiddemo.WIFI.WIFIDemo5.dialog.WifiConnDialog;
@@ -37,6 +43,10 @@ public class WIFIConnectActivity extends AppCompatActivity {
     private WifiAdmin mWifiAdmin;
     private List<ScanResult> mWifiList;
 
+    private int mTime = 1000;
+
+    private boolean isDelay = false;//是否已经连接，连接 不延时
+
     private OnNetworkChangeListener mOnNetworkChangeListener = new OnNetworkChangeListener() {
 
         @Override
@@ -53,10 +63,25 @@ public class WIFIConnectActivity extends AppCompatActivity {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             mAdapter.notifyDataSetChanged();
+        }
+    };
+
+    Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what){
+                case 0:
+                    Toast.makeText(WIFIConnectActivity.this,"连接失败",Toast.LENGTH_SHORT).show();
+                    break;
+                case 1:
+                    Toast.makeText(WIFIConnectActivity.this,"连接成功",Toast.LENGTH_SHORT).show();
+                    mTime = 3000;
+                    flushWifi();
+                    break;
+            }
         }
     };
 
@@ -69,12 +94,17 @@ public class WIFIConnectActivity extends AppCompatActivity {
         mWifiAdmin = new WifiAdmin(this);
         getWifiListInfo();
 
-        cm = (ConnectivityManager) this
-                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        //自动连接
+        if(mWifiAdmin.checkState() == WifiManager.WIFI_STATE_ENABLED && NetworkInfo.State.CONNECTED != getNetWorkState()) {
+            AutoConnectThread mAutoConnectThread = new AutoConnectThread(mWifiList, mWifiAdmin.getConfiguration(), true, mWifiAdmin, handler);
+            new Thread(mAutoConnectThread).start();
+            isDelay = true;
+        }
+
+        cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         //初始化UI
         initView();
-
         setListener();
     }
 
@@ -84,15 +114,15 @@ public class WIFIConnectActivity extends AppCompatActivity {
      * 初始化UI
      */
     private void initView() {
-        tgb_wifi_switch = (ToggleButton)findViewById(R.id.tgb_wifi_switch);
-        freelook_listview = (MyListView)findViewById(R.id.freelook_listview);
-        mAdapter = new MyListViewAdapter(this,mWifiList);
+        tgb_wifi_switch = (ToggleButton) findViewById(R.id.tgb_wifi_switch);
+        freelook_listview = (MyListView) findViewById(R.id.freelook_listview);
+        mAdapter = new MyListViewAdapter(this, mWifiList);
         freelook_listview.setAdapter(mAdapter);
 
         //设置Wifi状态
-        if(mWifiAdmin.checkState() == WifiManager.WIFI_STATE_ENABLED){
+        if (mWifiAdmin.checkState() == WifiManager.WIFI_STATE_ENABLED) {
             tgb_wifi_switch.setChecked(true);
-        }else{
+        } else {
             tgb_wifi_switch.setChecked(false);
         }
     }
@@ -104,9 +134,9 @@ public class WIFIConnectActivity extends AppCompatActivity {
         tgb_wifi_switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked){
+                if (isChecked) {
                     mWifiAdmin.openWifi();
-                }else{
+                } else {
                     mWifiAdmin.closeWifi();
                 }
             }
@@ -116,25 +146,7 @@ public class WIFIConnectActivity extends AppCompatActivity {
         freelook_listview.setonRefreshListener(new MyListView.OnRefreshListener() {
             @Override
             public void onRefresh() {
-
-                new AsyncTask<Void, Void, Void>() {
-                    protected Void doInBackground(Void... params) {
-                        try {
-                            Thread.sleep(1000);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        getWifiListInfo();
-                        return null;
-                    }
-
-                    @Override
-                    protected void onPostExecute(Void result) {
-                        mAdapter.setDatas(mWifiList);
-                        mAdapter.notifyDataSetChanged();
-                        freelook_listview.onRefreshComplete();
-                    }
-                }.execute();
+                flushWifi();
             }
         });
         //点击连接
@@ -142,19 +154,69 @@ public class WIFIConnectActivity extends AppCompatActivity {
             // position与id的区别:http://blog.csdn.net/u012398902/article/details/51024243
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.i("TGA","TGA position:"+position+",id:"+id);
+                Log.i("TGA", "TGA position:" + position + ",id:" + id);
                 // 1、获取当前的点击的WIFI
-                ScanResult clickWifiItem = mWifiList.get((int)id);
+                ScanResult clickWifiItem = mWifiList.get((int) id);
+
+                Log.i("TGA=========>", "TGA Wifi name：" + clickWifiItem.SSID + ",IP:" + clickWifiItem.BSSID + ",安全:" + clickWifiItem.capabilities + ",信号强度:" + clickWifiItem.frequency);
+
                 // 2、判断当前wifi是否已经连接 否 连接 是 显示连接信息
-                if(checkWifiIsConnec(clickWifiItem)){//已连接
+                if (checkWifiIsConnec(clickWifiItem)) {//已连接
                     isConnectSelf(clickWifiItem);
-                }else{//未连接
+                } else if(isHasConfig(clickWifiItem)){
+
+                }else {//未连接
                     isConnect(clickWifiItem);
                 }
             }
         });
     }
 
+
+    /**
+     * 刷新Wifi
+     */
+    private void flushWifi(){
+        new AsyncTask<Void, Void, Void>() {
+            protected Void doInBackground(Void... params) {
+                try {
+                    Thread.sleep(mTime);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                getWifiListInfo();
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void result) {
+                mAdapter.setDatas(mWifiList);
+                mAdapter.notifyDataSetChanged();
+                freelook_listview.onRefreshComplete();
+                Log.i("TGA----->","TGA 刷新完成");
+            }
+        }.execute();
+    }
+
+    /**
+     * 判断是否已经配置过
+     * @param scanResult
+     * @return
+     */
+    private boolean isHasConfig(ScanResult scanResult){
+        for(WifiConfiguration config : mWifiAdmin.getConfiguration()){
+            if(config.SSID.equals(scanResult.SSID) && config.BSSID.equals(scanResult.BSSID)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * 连接网络
+     * @param scanResult
+     */
     private void isConnect(ScanResult scanResult) {
         if (mWifiAdmin.isConnect(scanResult)) {
             // 已连接，显示连接状态对话框
@@ -176,7 +238,7 @@ public class WIFIConnectActivity extends AppCompatActivity {
 
             // 已连接，显示连接状态对话框
             WifiStatusDialog mStatusDialog = new WifiStatusDialog(
-                 this, R.style.PopDialog,
+                    this, R.style.PopDialog,
                     scanResult, mOnNetworkChangeListener);
             mStatusDialog.show();
 
@@ -189,25 +251,37 @@ public class WIFIConnectActivity extends AppCompatActivity {
             }
             if (iswifi) {
                 Toast.makeText(this, "连接成功！", Toast.LENGTH_SHORT).show();
-            }else {
+            } else {
                 Toast.makeText(this, "连接失败！", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
+    /**
+     * 展示信息
+     * @param scanResult
+     */
+    private void showDetails(ScanResult scanResult){
+        // 已连接，显示连接状态对话框
+        WifiStatusDialog mStatusDialog = new WifiStatusDialog(
+                this, R.style.PopDialog,
+                scanResult, mOnNetworkChangeListener);
+        mStatusDialog.show();
+    }
+
     //判断当前wifi是否是已经连接
     ConnectivityManager cm;
+
     private boolean checkWifiIsConnec(ScanResult scanResult) {
 
-        NetworkInfo.State wifi = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
-                .getState();
+        NetworkInfo.State wifi = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
         if (wifi == NetworkInfo.State.CONNECTED) {
             WifiInfo wifiInfo = mWifiAdmin.getWifiInfo();
             String g1 = wifiInfo.getSSID();
             Log.e("g1============>", g1);
             Log.e("g2============>", scanResult.SSID);
 
-            String g2 = "\""+scanResult.SSID+"\"";
+            String g2 = "\"" + scanResult.SSID + "\"";
 
             if (g2.endsWith(g1)) {
                 return true;
@@ -224,4 +298,44 @@ public class WIFIConnectActivity extends AppCompatActivity {
         mWifiList = mWifiAdmin.getWifiList();
     }
 
+    //================================== 状态监听 ==================================================
+    public class NetWorkStateChangeReceviver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            NetworkInfo.State wifiState = null;
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            wifiState = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
+            Log.i("TGA-------->","============ NetWorkStateChangeReceviver ================");
+            if(wifiState != null && NetworkInfo.State.CONNECTED == wifiState){
+                Log.i("TGA-------->","TGA wifi 已经打开:"+wifiState);
+            }
+            if(wifiState != null && NetworkInfo.State.CONNECTING == wifiState){
+                Log.i("TGA-------->","TGA wifi 正在打开:"+wifiState);
+            }
+            if(wifiState != null && NetworkInfo.State.SUSPENDED == wifiState){
+                Log.i("TGA-------->","TGA wifi 有冲突:"+wifiState);
+            }
+            if(wifiState != null && NetworkInfo.State.DISCONNECTING == wifiState){
+                Log.i("TGA-------->","TGA wifi 正在关闭:"+wifiState);
+            }
+            if(wifiState != null && NetworkInfo.State.DISCONNECTED == wifiState){
+                Log.i("TGA-------->","TGA wifi 已经关闭:"+wifiState);
+            }
+            if(wifiState != null && NetworkInfo.State.UNKNOWN == wifiState){
+                Log.i("TGA-------->","TGA wifi 未知:"+wifiState);
+            }
+        }
+    }
+
+    /**
+     * 获取当前wifi连接状态
+     * @return
+     */
+    private NetworkInfo.State getNetWorkState(){
+        NetworkInfo.State wifiState = null;
+        ConnectivityManager cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        wifiState = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
+        return wifiState;
+    }
 }

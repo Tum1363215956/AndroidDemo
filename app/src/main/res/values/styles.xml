@@ -8,12 +8,14 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <!-- Main style -->
     <style name="style_main_btn">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:onClick">main_btn_onClick</item>
     </style>
 
+    <!-- Wifi style -->
     <style name="style_wifi_btn">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
@@ -27,4 +29,10 @@
         <item name="android:windowContentOverlay">@null</item>
     </style>
 
+    <!-- RxJava style -->
+    <style name="style_rxjava_btn">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:onClick">rxjava_btn_onClick</item>
+    </style>
 </resources>

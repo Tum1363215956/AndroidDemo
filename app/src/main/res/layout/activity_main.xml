@@ -16,6 +16,11 @@
             style="@style/style_main_btn"
             android:text="WIFI"/>
 
+        <Button
+            android:id="@+id/btn_main_rxjava"
+            style="@style/style_main_btn"
+            android:text="RXJAVA"/>
+
     </LinearLayout>
 
 </ScrollView>

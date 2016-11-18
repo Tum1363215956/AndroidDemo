@@ -24,7 +24,7 @@ public class MyListViewAdapter extends BaseAdapter {
 
 	private List<ScanResult> datas;
 	private Context context;
-	// ȡ��WifiManager����
+
 	private WifiManager mWifiManager;
 	private WifiInfo connInfo;
 	ConnectivityManager cm;

@@ -34,7 +34,7 @@
         <Button
             android:id="@+id/btn_wifi_wifidemo6"
             style="@style/style_wifi_btn"
-            android:text="@string/wifi_demo2"/>
+            android:text="@string/wifichuantu"/>
 
     </LinearLayout>
 

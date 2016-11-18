@@ -31,4 +31,8 @@
     <string name="ip_address">IP地址</string>
     <string name="wifi_demo2">Wifi连接Demo2</string>
 
+    <!-- wifi 传图-->
+    <string name="wifichuantu">Wifi传图</string>
+
+
 </resources>
