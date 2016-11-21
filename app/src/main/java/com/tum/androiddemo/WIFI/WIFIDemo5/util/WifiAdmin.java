@@ -30,7 +30,17 @@ public class WifiAdmin {
     private List<WifiConfiguration> mWifiConfigurations;
     WifiLock mWifiLock;
 
-    public WifiAdmin(Context context) {
+    //单例模式
+    private static WifiAdmin wifiAdmin;
+
+    public static WifiAdmin getInstance(Context context){
+        if(wifiAdmin == null){
+            wifiAdmin = new WifiAdmin(context);
+        }
+        return wifiAdmin;
+    }
+
+    private WifiAdmin(Context context) {
         // 取得WifiManager对象
         mWifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         // 取得WifiInfo对象

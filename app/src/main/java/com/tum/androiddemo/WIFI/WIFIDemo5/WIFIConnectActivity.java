@@ -23,6 +23,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.tum.androiddemo.R;
+import com.tum.androiddemo.WIFI.WIFIDemo5.Service.AutoConnService;
 import com.tum.androiddemo.WIFI.WIFIDemo5.Thread.AutoConnectThread;
 import com.tum.androiddemo.WIFI.WIFIDemo5.adapter.MyListViewAdapter;
 import com.tum.androiddemo.WIFI.WIFIDemo5.dialog.OnNetworkChangeListener;
@@ -46,7 +47,7 @@ public class WIFIConnectActivity extends AppCompatActivity {
 
     private int mTime = 1000;
 
-    private boolean isDelay = false;//是否已经连接，连接 不延时
+
 
     private NetWorkStateChangeReceviver receviver;
 
@@ -96,15 +97,11 @@ public class WIFIConnectActivity extends AppCompatActivity {
         setContentView(R.layout.activity_wificonnect_demo5);
 
         //WIFI
-        mWifiAdmin = new WifiAdmin(this);
+        mWifiAdmin = WifiAdmin.getInstance(getApplicationContext());
         getWifiListInfo();
 
         //自动连接
-        if(mWifiAdmin.checkState() == WifiManager.WIFI_STATE_ENABLED && NetworkInfo.State.CONNECTED != getNetWorkState()) {
-            AutoConnectThread mAutoConnectThread = new AutoConnectThread(mWifiList, mWifiAdmin.getConfiguration(), true, mWifiAdmin, handler);
-            new Thread(mAutoConnectThread).start();
-            isDelay = true;
-        }
+        autoConnect();
 
         cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -125,6 +122,13 @@ public class WIFIConnectActivity extends AppCompatActivity {
         registerBroadcast();//注册广播
     }
 
+    private void autoConnect(){
+        if(mWifiAdmin.checkState() == WifiManager.WIFI_STATE_ENABLED && NetworkInfo.State.CONNECTED != getNetWorkState()) {
+            AutoConnectThread mAutoConnectThread = new AutoConnectThread(mWifiList, mWifiAdmin.getConfiguration(), true, mWifiAdmin, handler);
+            new Thread(mAutoConnectThread).start();
+        }
+    }
+
     /**
      * 注册广播
      */
@@ -135,6 +139,7 @@ public class WIFIConnectActivity extends AppCompatActivity {
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.RSSI_CHANGED_ACTION);
+        filter.addAction("com.tum.wifi.statechange.autoconnect");
         registerReceiver(receviver,filter);
     }
 
@@ -355,6 +360,7 @@ public class WIFIConnectActivity extends AppCompatActivity {
                     System.out.println("wifi网络连接断开");
                     Log.i("TGA======>","TGA wifi网络连接断开");
                     flushWifi();
+                    startCheckAuto(true);
                 }else if(info.getState().equals(NetworkInfo.State.CONNECTED)){//连接成功
 
                     WifiManager wifiManager = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
@@ -379,6 +385,7 @@ public class WIFIConnectActivity extends AppCompatActivity {
                 if(wifistate == WifiManager.WIFI_STATE_DISABLED){
                     System.out.println("系统关闭wifi");
                     Log.i("TGA======>","TGA 系统关闭wifi");
+                    startCheckAuto(false);
                     flushWifi();
                 }
                 else if(wifistate == WifiManager.WIFI_STATE_ENABLED){
@@ -387,8 +394,21 @@ public class WIFIConnectActivity extends AppCompatActivity {
                     mTime = 1500;
                     flushWifi();
                 }
+            }else if(intent.getAction().equals("com.tum.wifi.statechange.autoconnect")){
+                Log.i("TGA","TGA 自动连接启动!");
+                autoConnect();
             }
         }
+    }
+
+    /**
+     * 开启服务，检测自动更新
+     * @param isStart
+     */
+    private void startCheckAuto(boolean isStart){
+        Intent intent = new Intent(this, AutoConnService.class);
+        intent.putExtra("scan",isStart);
+        startService(intent);
     }
 
     /**
