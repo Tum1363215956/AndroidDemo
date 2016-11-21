@@ -81,6 +81,7 @@ public class AutoConnectThread implements Runnable {
                     Log.i("TGA------------>", "TGA ===================================");
                     if (isConfigurated) {
                         Log.i("TGA---------------->", "TGA 连接前");
+
                         boolean isConnSuccess = mWifiAdmin.connectWifi(networkId);
                         Log.i("TGA---------------->", "TGA 连接后");
                         if (isConnSuccess) {

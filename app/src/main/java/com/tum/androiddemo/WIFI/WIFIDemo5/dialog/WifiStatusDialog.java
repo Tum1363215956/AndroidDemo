@@ -4,7 +4,9 @@ import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Point;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiConfiguration;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
@@ -41,7 +43,7 @@ public class WifiStatusDialog extends Dialog {
 
 	public WifiStatusDialog(Context context, int theme) {
 		super(context, theme);
-		this.mWifiAdmin = new WifiAdmin(context);
+		this.mWifiAdmin = WifiAdmin.getInstance(context);
 	}
 
 	private WifiStatusDialog(Context context, int theme, String wifiName,
@@ -51,7 +53,7 @@ public class WifiStatusDialog extends Dialog {
 		this.wifiName = wifiName;
 		this.level = singlStren;
 		this.securigyLevel = securityLevl;
-		this.mWifiAdmin = new WifiAdmin(context);
+		this.mWifiAdmin = WifiAdmin.getInstance(context);
 	}
 
 	public WifiStatusDialog(Context context, int theme, ScanResult scanResult,
@@ -59,7 +61,7 @@ public class WifiStatusDialog extends Dialog {
 		this(context, theme, scanResult.SSID, scanResult.level,
 				scanResult.capabilities);
 		this.scanResult = scanResult;
-		this.mWifiAdmin = new WifiAdmin(context);
+		this.mWifiAdmin = WifiAdmin.getInstance(context);
 		this.onNetworkChangeListener = onNetworkChangeListener;
 	}
 
@@ -80,6 +82,10 @@ public class WifiStatusDialog extends Dialog {
 			@Override
 			public void onClick(View v) {
 				System.out.println("txtBtnCancel");
+				int netWorkId = getNetId(scanResult);
+				if(netWorkId != -1){
+					mWifiAdmin.disConnectionWifi(netWorkId);
+				}
 				WifiStatusDialog.this.dismiss();
 			}
 		});
@@ -135,4 +141,19 @@ public class WifiStatusDialog extends Dialog {
 
 	private OnNetworkChangeListener onNetworkChangeListener;
 
+
+	/**
+	 * 获取netId
+	 * @param scanResult
+	 * @return
+     */
+	private int getNetId(ScanResult scanResult){
+		for(WifiConfiguration config : mWifiAdmin.getConfiguration()) {
+			Log.i("TGA", "TGA config.SSID：" + config.SSID + ",scanResult.SSID：" + scanResult.SSID);
+			if (config.SSID.equals("\"" + scanResult.SSID + "\"")) {
+				return config.networkId;
+			}
+		}
+		return -1;
+	}
 }

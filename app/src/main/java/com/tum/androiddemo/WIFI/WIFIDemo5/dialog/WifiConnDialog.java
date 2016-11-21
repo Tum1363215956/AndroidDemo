@@ -150,7 +150,7 @@ public class WifiConnDialog extends Dialog {
 				}
 
 				// 连接网络
-				WifiAdmin mWifiAdmin = new WifiAdmin(context);
+				WifiAdmin mWifiAdmin = WifiAdmin.getInstance(context);
 				boolean bRet = mWifiAdmin.connect(scanResult.SSID, edtPassword
 						.getText().toString().trim(), type);
 				if (bRet) {

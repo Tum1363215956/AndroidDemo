@@ -101,7 +101,9 @@ public class WIFIConnectActivity extends AppCompatActivity {
         getWifiListInfo();
 
         //自动连接
-        autoConnect();
+//        autoConnect();
+
+        startCheckAuto(true);
 
         cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -124,6 +126,9 @@ public class WIFIConnectActivity extends AppCompatActivity {
 
     private void autoConnect(){
         if(mWifiAdmin.checkState() == WifiManager.WIFI_STATE_ENABLED && NetworkInfo.State.CONNECTED != getNetWorkState()) {
+
+            Log.i("TGA","TGA 自动连接 autoconnect!Wifi的状态为:"+getNetWorkState());
+            mWifiAdmin.startScan();
             AutoConnectThread mAutoConnectThread = new AutoConnectThread(mWifiList, mWifiAdmin.getConfiguration(), true, mWifiAdmin, handler);
             new Thread(mAutoConnectThread).start();
         }
@@ -360,7 +365,13 @@ public class WIFIConnectActivity extends AppCompatActivity {
                     System.out.println("wifi网络连接断开");
                     Log.i("TGA======>","TGA wifi网络连接断开");
                     flushWifi();
-                    startCheckAuto(true);
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            startCheckAuto(true);
+                        }
+                    },10000);
+
                 }else if(info.getState().equals(NetworkInfo.State.CONNECTED)){//连接成功
 
                     WifiManager wifiManager = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
