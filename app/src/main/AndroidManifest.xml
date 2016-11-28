@@ -48,7 +48,10 @@
         <service
             android:name=".WIFI.WIFIDemo5.Service.AutoConnService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
+
+        <activity android:name=".Exception.ExceptionActivity" />
+        <activity android:name=".Exception.Demo1UncaughtExceptionHandler.UncaughtExceptionHandlerActivity"></activity>
     </application>
 
 </manifest>

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
+import com.tum.androiddemo.Exception.ExceptionActivity;
 import com.tum.androiddemo.RXJava.RXJavaActivity;
 import com.tum.androiddemo.UI.UIActivity;
 import com.tum.androiddemo.WIFI.WIFIActivity;
@@ -29,6 +30,9 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.btn_main_UI://UiJava
                 intent.setClass(this, UIActivity.class);
+                break;
+            case R.id.btn_main_Exception://UiJava
+                intent.setClass(this, ExceptionActivity.class);
                 break;
         }
         startActivity(intent);

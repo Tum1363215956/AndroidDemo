@@ -3,6 +3,7 @@ package com.tum.androiddemo.WIFI.WIFIDemo5.Service;
 import android.app.Service;
 import android.content.Intent;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -10,8 +11,8 @@ import android.util.Log;
 
 import com.tum.androiddemo.WIFI.WIFIDemo5.util.WifiAdmin;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class AutoConnService extends Service {
 
@@ -28,24 +29,32 @@ public class AutoConnService extends Service {
         }
     };
 
-    private Timer timer = new Timer();
-    private TimerTask task = new TimerTask() {
+    private boolean isScan;
+    private ExecutorService exec = Executors.newCachedThreadPool();
+
+    private boolean  isDestory = false;
+
+    private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            Log.i("TGA","TGA SCAN Start!");
-            wifiAdmin.startScan();
-            for (ScanResult result : wifiAdmin.getWifiList()) {
-                Log.i("TGA","TGA SCAN SSID:"+result.SSID);
-                if (result.SSID.equals("welldone")) {
-                    try {
-                        Thread.sleep(3000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+            Log.i("TGA", "TGA 开启任务!");
+            while(isScan&&!isDestory){
+                if(wifiAdmin.checkState() == WifiManager.WIFI_STATE_ENABLED){
+                    return;
+                }
+                Log.i("TGA","TGA SCAN Start!");
+                wifiAdmin.startScan();
+                for (ScanResult result : wifiAdmin.getWifiList()) {
+                    Log.i("TGA","TGA SCAN SSID:"+result.SSID);
+                    if (result.SSID.equals("welldone")) {
+                        handler.sendEmptyMessage(0);
+                        return;
                     }
-                    handler.sendEmptyMessage(0);
-                    isScanning = false;
-                    timer.cancel();
-                    break;
+                }
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -67,30 +76,15 @@ public class AutoConnService extends Service {
         }
         Log.i("TGA", "TGA 开启服务!");
         //启动扫描任务
-        boolean isScan = intent.getBooleanExtra("scan", false);
-        if (isScan&&!isScanning) {
-            Log.i("TGA", "TGA 开启检查!");
-            timer.schedule(task, 0, 1000);
-            isScanning = true;
-        } else if(isScan == false){//取消
-            Log.i("TGA", "TGA 关闭检查任务!");
-            if(isScanning) {
-                timer.cancel();
-            }
-        }
+        isScan = intent.getBooleanExtra("scan", false);
+        exec.execute(runnable);
+
         return super.onStartCommand(intent, flags, startId);
     }
 
-
-    private class ScanThread extends Thread{
-
-        @Override
-        public void run() {
-            while(isScanning){
-                
-            }
-        }
+    @Override
+    public void onDestroy() {
+        isDestory = true;
+        super.onDestroy();
     }
-
-
 }

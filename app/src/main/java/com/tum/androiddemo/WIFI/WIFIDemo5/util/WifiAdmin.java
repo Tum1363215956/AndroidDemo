@@ -112,7 +112,25 @@ public class WifiAdmin {
      * @return true false
      */
     public boolean connectWifi(int netId) {
-        return mWifiManager.enableNetwork(netId, true);
+        disconnectWifi();//先断开连接
+        return mWifiManager.enableNetwork(netId,false);
+    }
+
+    /**
+     * 断开当前连接的网络
+     */
+    public void disconnectWifi() {
+        int netId = getCurrentNetworkId();
+        mWifiManager.disableNetwork(netId);
+        mWifiManager.disconnect();
+        mWifiInfo = null;
+    }
+
+    /**
+     * 得到连接的ID，如果没有就返回0，否则返回正确的id
+     */
+    public int getCurrentNetworkId() {
+        return (mWifiInfo == null) ? 0 : mWifiInfo.getNetworkId();
     }
 
     public void startScan() {

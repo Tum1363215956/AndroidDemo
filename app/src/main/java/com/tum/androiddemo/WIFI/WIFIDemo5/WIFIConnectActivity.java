@@ -422,6 +422,13 @@ public class WIFIConnectActivity extends AppCompatActivity {
         startService(intent);
     }
 
+    private void stopService(boolean isStart){
+        Intent intent = new Intent(this, AutoConnService.class);
+        intent.putExtra("scan",isStart);
+        stopService(intent);
+    }
+
+
     /**
      * 网络状态发生改变
      */

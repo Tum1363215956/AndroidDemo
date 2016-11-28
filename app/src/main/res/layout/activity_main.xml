@@ -26,6 +26,11 @@
             style="@style/style_main_btn"
             android:text="UI"/>
 
+        <Button
+            android:id="@+id/btn_main_Exception"
+            style="@style/style_main_btn"
+            android:text="EXCEPTION"/>
+
     </LinearLayout>
 
 </ScrollView>
